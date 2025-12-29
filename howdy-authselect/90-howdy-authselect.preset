@@ -1,2 +1,0 @@
-# Enable howdy PAM patching service to watch for authselect changes
-enable howdy-authselect.path
