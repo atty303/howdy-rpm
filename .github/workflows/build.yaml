@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BASH_ENV: /tmp/bash_env
+    outputs:
+      new_release_published: ${{ steps.release.outputs.new_release_published }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,9 +33,13 @@ jobs:
           . "$BASH_ENV"
           mise doctor
 
+      - name: Build
+        run: mise run build
+
       - name: Semantic Release
+        id: release
         if: github.event_name == 'push'
-        uses: cycjimmy/semantic-release-action@v4
+        uses: cycjimmy/semantic-release-action@v6
         with:
           extra_plugins: |
             @semantic-release/commit-analyzer
@@ -45,13 +51,13 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name == 'push'
+        if: steps.release.outputs.new_release_published == 'true'
         with:
           path: dist
 
   deploy:
     needs: build
-    if: github.event_name == 'push'
+    if: needs.build.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

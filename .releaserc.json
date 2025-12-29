@@ -3,12 +3,6 @@
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     [
-      "@semantic-release/exec",
-      {
-        "publishCmd": "mise run build"
-      }
-    ],
-    [
       "@semantic-release/github"
     ]
   ]
