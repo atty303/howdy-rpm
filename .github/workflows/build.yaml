@@ -3,36 +3,55 @@ name: build
 on:
   push:
     branches: [ main ]
+  pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      BASH_ENV: /tmp/bash_env
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup mise
         uses: jdx/mise-action@v2
         with:
           github_token: ${{ github.token }}
+      - name: Activate mise
+        run: |
+          # shellcheck disable=SC2016
+          echo 'eval "$(mise activate bash)"' >> "$BASH_ENV"
+          # shellcheck disable=SC1090
+          . "$BASH_ENV"
+          mise doctor
 
-      - name: Build
-        run: mise run build
+      - name: Semantic Release
+        if: github.event_name == 'push'
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            @semantic-release/commit-analyzer
+            @semantic-release/release-notes-generator
+            @semantic-release/exec
+            @semantic-release/git
+            @semantic-release/github
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push'
         with:
           path: dist
 
   deploy:
     needs: build
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
