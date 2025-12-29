@@ -1,0 +1,5 @@
+[tasks.shell]
+run = "podman run --rm -it -v .:/src:Z fedora:43 bash"
+
+[tasks.build]
+run = "podman run --rm -v .:/src:Z fedora:43 -w /src ./build.sh"
