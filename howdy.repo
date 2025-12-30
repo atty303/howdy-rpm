@@ -1,0 +1,5 @@
+[howdy]
+name=Howdy
+baseurl=https://atty303.github.io/howdy-rpm/
+enabled=1
+gpgcheck=0

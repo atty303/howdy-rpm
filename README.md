@@ -1,9 +1,22 @@
 # howdy-rpm
 
-これはFedora 43向けにビルドしたHowdyのRPMパッケージです。
-https://github.com/principis/copr-specs をベースにしています。
+This is a [Howdy](https://github.com/boltgolt/howdy) RPM package built for Fedora 43 (I am using Bazzite).
+It is based on https://github.com/principis/copr-specs.
 
-## 利用方法
+## Background
+
+Howdy requires `python-dlib`, which is no longer available in Fedora 43. Therefore, it is built from source.
+
+## Usage
+
+### Blue Build
+
+```yaml
+# recipe.yml
+
+```
+
+### Fedora
 
 ```ini
 # /etc/yum.repos.d/howdy.repo
@@ -18,18 +31,22 @@ gpgcheck=0
 sudo dnf install howdy
 ```
 
-## 開発
+## Development
 
 ### Prerequisite
 
 - podman
 - mise
 
-### ビルド方法
+### How to build
 
-1. このリポジトリをクローンします。
-2. `mise run build`でビルドします。
+1. Clone this repository.
+2. Build with `mise run build`.
 
-### リリース
+### Release
 
-semantic-releaseを使用しています。
+Using semantic-release.
+
+## Maintenance
+
+I created this for my own use, so I will continue to maintain it as long as I use it.
