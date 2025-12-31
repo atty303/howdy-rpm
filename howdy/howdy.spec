@@ -5,7 +5,7 @@
 
 Name:           howdy
 Version:        3.0.0
-Release:        9%{?dist}
+Release:        10%{?dist}
 Summary:        Windows Hello™ style authentication for Linux
 
 # The entire source code is GPL-3.0-or-later except:
@@ -13,10 +13,6 @@ Summary:        Windows Hello™ style authentication for Linux
 License:        MIT AND (GPL-2.0-or-later OR BSD-3-Clause)
 URL:            %{forgeurl}
 Source0:        %{forgesource}
-Source1:        howdy_profile.sh
-Source2:        howdy_profile.csh
-Source3:        howdy.te
-Source4:        99-howdy-video.rules
 Source10:       https://github.com/davisking/dlib-models/raw/master/dlib_face_recognition_resnet_model_v1.dat.bz2
 Source11:       https://github.com/davisking/dlib-models/raw/master/mmod_human_face_detector.dat.bz2
 Source12:       https://github.com/davisking/dlib-models/raw/master/shape_predictor_5_face_landmarks.dat.bz2
@@ -83,11 +79,6 @@ chmod 0755 howdy/src/compare.py
 # Disable downloading dlib-data files
 sed -i "/install_data('dlib-data\/install.sh',.*/d"  howdy/src/meson.build
 
-# Compile SELinux policy module
-cp %{S:3} howdy.te
-checkmodule -M -m -o howdy.mod howdy.te
-semodule_package -o howdy.pp -m howdy.mod
-
 %build
 %meson \
     -Ddlib_data_dir=%{_datadir}/%{name}/dlib-data/ \
@@ -99,10 +90,6 @@ semodule_package -o howdy.pp -m howdy.mod
 
 %install
 %meson_install
-
-# Install environment variables
-install -Dm 0644 %{S:1} %{buildroot}%{_sysconfdir}/profile.d/%{name}.sh
-install -Dm 0644 %{S:2} %{buildroot}%{_sysconfdir}/profile.d/%{name}.csh
 
 # Install logos
 install -Dm 0644 howdy/src/logo.png %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/%{name}.png
@@ -117,43 +104,6 @@ mkdir -p   %{buildroot}%{_sysconfdir}/%{name}/models/
 
 # install dlib-data files
 install -Dm 0644 howdy/src/dlib-data/*.dat -t %{buildroot}%{_datadir}/%{name}/dlib-data/
-
-# install the SELinux policy
-install -Dm 0644 howdy.pp %{buildroot}%{_datadir}/selinux/targeted/howdy.pp
-
-# install udev rules for video device access
-install -Dm 0644 %{S:4} %{buildroot}%{_udevrulesdir}/99-howdy-video.rules
-
-%post
-# Install SELinux module
-if command -v sestatus >/dev/null 2>&1 && sestatus | grep -q 'SELinux status:.*enabled'; then
-    # Check if the SELinux module is already installed
-    if ! semodule -l | grep -q howdy; then
-        # Load the SELinux policy module if it's not already loaded
-        semodule -i %{_datadir}/selinux/targeted/howdy.pp
-    fi
-fi
-
-# Add gdm user to video group for GDM login face recognition
-if getent passwd gdm >/dev/null 2>&1; then
-    if ! id -nG gdm 2>/dev/null | grep -qw video; then
-        usermod -aG video gdm 2>/dev/null || :
-    fi
-fi
-
-# Reload udev rules
-udevadm control --reload-rules 2>/dev/null || :
-udevadm trigger --subsystem-match=video4linux 2>/dev/null || :
-
-%postun
-# Uninstall SELinux module
-if command -v sestatus >/dev/null 2>&1 && sestatus | grep -q 'SELinux status:.*enabled'; then
-    # Check if the howdy module is installed
-    if semodule -l | grep -q howdy; then
-        # Remove the howdy SELinux policy module
-        semodule -r howdy
-    fi
-fi
 
 %files
 %license LICENSE
@@ -170,9 +120,6 @@ fi
 %dir %{_sysconfdir}/%{name}/
 %dir %{_sysconfdir}/%{name}/models/
 %config(noreplace) %{_sysconfdir}/%{name}/config.ini
-%config(noreplace) %{_sysconfdir}/profile.d/%{name}.*
-%{_datadir}/selinux/*/howdy.pp
-%{_udevrulesdir}/99-howdy-video.rules
 
 %files gtk
 %{_bindir}/%{name}-gtk
@@ -186,6 +133,9 @@ fi
 %{_datadir}/%{name}/dlib-data/*.dat
 
 %changelog
+* Wed Dec 31 2025 Koji AGAWA <me@atty303.ninja> - 3.0.0-10
+- Remove 3.0.0-8 changes
+
 * Sat Dec 06 2025 Ronny Pfannschmidt <packaging@ronnypfannschmidt.de> - 3.0.0-8
 - Add SELinux policy for video device access
 - Add udev rules for video device permissions

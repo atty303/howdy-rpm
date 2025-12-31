@@ -1,0 +1,16 @@
+module howdy 1.0;
+
+require {
+    type local_login_t;
+    type sysctl_vm_t;
+    type lib_t;
+    type v4l_device_t;
+    class dir { add_name create remove_name write };
+    class file { create getattr open read rename write };
+    class chr_file { map write };
+}
+
+allow local_login_t lib_t:dir { add_name create remove_name write };
+allow local_login_t lib_t:file { create rename write };
+allow local_login_t sysctl_vm_t:file { getattr open read };
+allow local_login_t v4l_device_t:chr_file { map write };
